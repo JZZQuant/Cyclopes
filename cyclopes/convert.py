@@ -1,9 +1,7 @@
 import argparse
-import os
-import numpy as np
 
-from model import CycleGAN
-from preprocess import *
+from cyclopes.model import CycleGAN
+from cyclopes.preprocess import *
 
 def conversion(model_dir, model_name, data_dir, conversion_direction, output_dir):
 

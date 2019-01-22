@@ -1,11 +1,8 @@
-import os
-import numpy as np
 import argparse
 import time
-import librosa
 
-from preprocess import *
-from model import CycleGAN
+from cyclopes.preprocess import *
+from cyclopes.model import CycleGAN
 
 
 def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validation_A_dir, validation_B_dir, output_dir, tensorboard_log_dir):

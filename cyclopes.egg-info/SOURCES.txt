@@ -1,0 +1,14 @@
+README.md
+setup.py
+cyclopes/convert.py
+cyclopes/download.py
+cyclopes/model.py
+cyclopes/module.py
+cyclopes/preprocess.py
+cyclopes/train.py
+cyclopes/utils.py
+cyclopes.egg-info/PKG-INFO
+cyclopes.egg-info/SOURCES.txt
+cyclopes.egg-info/dependency_links.txt
+cyclopes.egg-info/requires.txt
+cyclopes.egg-info/top_level.txt
