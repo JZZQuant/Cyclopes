@@ -1,5 +1,7 @@
 README.md
+setup.cfg
 setup.py
+cyclopes/__init__.py
 cyclopes/convert.py
 cyclopes/download.py
 cyclopes/model.py
