@@ -9,6 +9,7 @@ jobs:
     steps:
       - checkout
       - run: conda config --add channels conda-forge
+      - run: conda update conda
       - run: conda config --set always_yes true
       - run: conda config --set quiet true
       - run: conda install conda-build
@@ -21,6 +22,7 @@ jobs:
     steps:
       - checkout
       - run: conda config --add channels conda-forge
+      - run: conda update conda
       - run: conda config --set always_yes true
       - run: conda config --set quiet true
       - run: conda install conda-build
