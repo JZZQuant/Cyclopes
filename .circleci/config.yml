@@ -9,6 +9,7 @@ jobs:
     steps:
       - checkout
       - run: conda config --add channels conda-forge
+      - run: conda install -c conda-forge tensorflow
       - run: conda update conda
       - run: conda config --set always_yes true
       - run: conda config --set quiet true
