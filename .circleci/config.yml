@@ -4,29 +4,18 @@ jobs:
   build:
     working_directory: ~/repo
     docker:
-      - image: continuumio/miniconda3
+      - image: charan678/cyclopes-cicd:latest
 
     steps:
       - checkout
-      - run: conda config --add channels conda-forge
-      - run: conda install -c conda-forge tensorflow
-      - run: conda update conda
-      - run: conda config --set always_yes true
-      - run: conda config --set quiet true
-      - run: conda install conda-build
       - run:
           name: install dependencies
           command: python3 setup.py install
   test:
     docker:
-      - image: continuumio/miniconda3
+      - image: charan678/cyclopes-cicd:latest
     steps:
       - checkout
-      - run: conda config --add channels conda-forge
-      - run: conda update conda
-      - run: conda config --set always_yes true
-      - run: conda config --set quiet true
-      - run: conda install conda-build
       - run:
           name: Install tests dependencies and run the tests
           command: python3 setup.py test
