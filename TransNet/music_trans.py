@@ -26,7 +26,7 @@ POOL_SIZE = 400
 INSTRUMENTS FILE LOAD
 '''
 
-inst_paths = ['/home/ubuntu/datasets/bach/piano', 
+inst_paths = ['../resources/datasets/piano',
               '/home/ubuntu/datasets/bach/harp', 
               '/home/ubuntu/datasets/bach/violin'] 
 
@@ -222,11 +222,11 @@ decode_losses = []
 samples_list = []
 for instrument_index in range(INSTRUMENTS_NUM):
     # decode
-    dilation_sum, outputs = naive_wavenet(inputs=x_onehot, condition=up_latents, 
-                                          layers=9, h_filters=64, out_filters=MU, 
+    dilation_sum, outputs = naive_wavenet(inputs=x_onehot, condition=up_latents,
+                                          layers=9, h_filters=64, out_filters=MU,
                                           name='wavenet_decoder_' + str(instrument_index))
     outputs_probs = tf.nn.softmax(outputs)
-    
+
     # sample from outputs
     dist = tf.distributions.Categorical(probs=outputs_probs)
     samples = inv_mulaw(tf.cast(dist.sample(), tf.float32) / MU * 2. - 1., MU)
