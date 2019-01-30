@@ -10,12 +10,12 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import librosa
+import os
 
-from os import listdir
-from os.path import isfile, join
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
-STEPS_PER_EPOCH = 5000
+STEPS_PER_EPOCH = 50
 
 # hyper-parameters
 MU = 256
@@ -26,41 +26,17 @@ POOL_SIZE = 400
 INSTRUMENTS FILE LOAD
 '''
 
-inst_paths = ['../resources/datasets/piano',
-              '/home/ubuntu/datasets/bach/harp', 
-              '/home/ubuntu/datasets/bach/violin'] 
-
-inst_files_list = []
-for inst_path in inst_paths:
-    inst_files = [join(inst_path, f) for f in listdir(inst_path) if isfile(join(inst_path, f)) and f.endswith('npy')]
-    inst_files_list.append(inst_files)
-
+inst_files = ['../resources/datasets/piano.npz',
+              '../resources/datasets/violin.npz',
+              '../resources/datasets/harp.npz']
 '''
 INSTRUMENTS AUDIO LOAD
 '''
 
 T = 10000
 
-inst_waves_list = []
+inst_waves_list = [np.stack(list(np.load(inst_file).values())[:-1]) for inst_file in inst_files]
 
-inst_index = 0
-for inst_files in inst_files_list:
-    waves = []
-    for inst_file in inst_files:
-        wave = np.load(inst_file)
-        if not len(wave) > 0 or len(wave) % T != 0:
-            continue
-            
-        wave /= max(wave)            
-        wave = np.resize(wave, [-1, T])
-
-        for i in range(wave.shape[0]):
-            waves.append(wave[i])
-        
-    waves = np.stack(waves)
-    inst_waves_list.append(waves)
-    inst_index += 1
-    
 for waves in inst_waves_list:
     print(waves.shape)
     
@@ -283,7 +259,7 @@ sess.run(tf.global_variables_initializer())
 
 saver = tf.train.Saver()
 # Restore variables from disk.
-saver.restore(sess, "./music_trans/model10.ckpt")
+# saver.restore(sess, "../resources/model10.ckpt")
 print("Model restored.")
 
 print('Tensorflow graph created.')
@@ -312,66 +288,64 @@ def wave_augmentation(inputs):
 _epoch = 11
 average_loss = 0.0
 
-while(True):
-    
-    ### TRAINING
-    for i in range(STEPS_PER_EPOCH):
-        for instrument_index in range(INSTRUMENTS_NUM):
-            batch_size = 3
-            indexes = np.random.randint(0, inst_waves_list[instrument_index].shape[0], batch_size)
-            augmented = []
-            for _wave in inst_waves_list[instrument_index][indexes]:
-                augmented.append(wave_augmentation(_wave))
-                
-            augmented = np.stack(augmented, axis=0)
-            _, _loss = sess.run([train_step, loss], feed_dict={x_holder: augmented,
-                                                     label_holder: instrument_index})
-            
-            average_loss = 0.99 * average_loss + 0.01 * _loss
-            print('step : ',i ,'instrument : ', instrument_index, 'loss : ', _loss, 'average_loss : ', average_loss)
-        
-        
+### TRAINING
+for i in range(STEPS_PER_EPOCH):
+    for instrument_index in range(INSTRUMENTS_NUM):
+        batch_size = 3
+        indexes = np.random.randint(0, inst_waves_list[instrument_index].shape[0], batch_size)
+        augmented = []
+        for _wave in inst_waves_list[instrument_index][indexes]:
+            augmented.append(wave_augmentation(_wave))
 
-    ### TEST GENERATE 
-    src_instrument_index = 0
-    dest_instrument_index = 2
-        
-    # get latents
-    index = np.random.randint(0, inst_waves_list[src_instrument_index].shape[0], 1)
-    _src = inst_waves_list[src_instrument_index][index]
+        augmented = np.stack(augmented, axis=0)
+        _, _loss = sess.run([train_step, loss], feed_dict={x_holder: augmented,
+                                                 label_holder: instrument_index})
 
-    _latents = sess.run(up_latents, feed_dict={x_holder: _src})
-    
-    
-    plt.figure(figsize=[18, 10])
-    
-    plt.subplot(4, 1, 1)
-    plt.plot(_src[0])
-    
-    plt.subplot(4, 1, 2)
-    plt.plot(_latents[0])
+        average_loss = 0.99 * average_loss + 0.01 * _loss
+        print('step : ',i ,'instrument : ', instrument_index, 'loss : ', _loss, 'average_loss : ', average_loss)
 
-    # get samples
-    
-    from tqdm import tqdm
-    from IPython.display import clear_output
 
-    _samples = np.zeros([1, 1024])
-    _latents = np.concatenate([np.zeros([1, 1024, LATENT_DIM]), _latents], axis=1)
-    for i in tqdm(range(T)):
-        _inference_sample_list = sess.run(inference_sample_list, feed_dict={x_holder: _samples[:, -1024:], 
-                                                                            latents_holder: _latents[:, i:i + 1024]})
-        _samples = np.concatenate([_samples, np.expand_dims(_inference_sample_list[dest_instrument_index], axis=0)], axis=-1)
-    
-    plt.subplot(4, 1, 3)
-    plt.plot(_src[0])
-    
-    plt.subplot(4, 1, 4)
-    plt.plot(_samples[0, 1024:])
-            
-    _epoch += 1
-    plt.savefig('music_trans/results_' + str(_epoch) + '.png')
-    
-    # Save the variables to disk.
-    save_path = saver.save(sess, "music_trans/model" + str(_epoch) + ".ckpt")
-    print("Model saved in path: %s" % save_path)
+
+### TEST GENERATE
+src_instrument_index = 0
+dest_instrument_index = 1
+
+# get latents
+index = np.random.randint(0, inst_waves_list[src_instrument_index].shape[0], 1)
+_src = inst_waves_list[src_instrument_index][index]
+
+_latents = sess.run(up_latents, feed_dict={x_holder: _src})
+
+
+plt.figure(figsize=[18, 10])
+
+plt.subplot(4, 1, 1)
+plt.plot(_src[0])
+
+plt.subplot(4, 1, 2)
+plt.plot(_latents[0])
+
+# get samples
+
+from tqdm import tqdm
+from IPython.display import clear_output
+
+_samples = np.zeros([1, 1024])
+_latents = np.concatenate([np.zeros([1, 1024, LATENT_DIM]), _latents], axis=1)
+for i in tqdm(range(T)):
+    _inference_sample_list = sess.run(inference_sample_list, feed_dict={x_holder: _samples[:, -1024:],
+                                                                        latents_holder: _latents[:, i:i + 1024]})
+    _samples = np.concatenate([_samples, np.expand_dims(_inference_sample_list[dest_instrument_index], axis=0)], axis=-1)
+
+plt.subplot(4, 1, 3)
+plt.plot(_src[0])
+
+plt.subplot(4, 1, 4)
+plt.plot(_samples[0, 1024:])
+
+_epoch += 1
+plt.savefig('../resources/results_' + str(_epoch) + '.png')
+
+# Save the variables to disk.
+save_path = saver.save(sess, "../resources/model" + str(_epoch) + ".ckpt")
+print("Model saved in path: %s" % save_path)
