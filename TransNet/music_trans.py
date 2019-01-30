@@ -15,7 +15,7 @@ import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
-STEPS_PER_EPOCH = 50
+STEPS_PER_EPOCH = 5000
 
 # hyper-parameters
 MU = 256
