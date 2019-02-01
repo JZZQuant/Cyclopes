@@ -36,11 +36,8 @@ INSTRUMENTS AUDIO LOAD
 T = 10000
 
 inst_waves_list = [np.stack(list(np.load(inst_file).values())[:-1]) for inst_file in inst_files]
-
-for waves in inst_waves_list:
-    print(waves.shape)
-    
 INSTRUMENTS_NUM = len(inst_waves_list)
+
 '''
 DEFINE WAVENET FUNTIONS
 '''
@@ -249,12 +246,12 @@ SESSION CREATE
 
 '''
 
-# config = tf.ConfigProto(
-#         device_count = {'GPU': 0}
-#     )
-# sess = tf.Session(config=config)
+config = tf.ConfigProto(
+        device_count = {'GPU': 0}
+    )
+sess = tf.Session(config=config)
 
-sess = tf.Session()
+# sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
 saver = tf.train.Saver()
@@ -285,7 +282,6 @@ def wave_augmentation(inputs):
     n_steps = float(np.random.ranf(1)[0] - 0.5)
     return pitch_shift(inputs, start_index, end_index, n_steps)
 
-_epoch = 11
 average_loss = 0.0
 
 ### TRAINING
@@ -316,36 +312,7 @@ _src = inst_waves_list[src_instrument_index][index]
 
 _latents = sess.run(up_latents, feed_dict={x_holder: _src})
 
-
-plt.figure(figsize=[18, 10])
-
-plt.subplot(4, 1, 1)
-plt.plot(_src[0])
-
-plt.subplot(4, 1, 2)
-plt.plot(_latents[0])
-
 # get samples
-
-from tqdm import tqdm
-from IPython.display import clear_output
-
-_samples = np.zeros([1, 1024])
-_latents = np.concatenate([np.zeros([1, 1024, LATENT_DIM]), _latents], axis=1)
-for i in tqdm(range(T)):
-    _inference_sample_list = sess.run(inference_sample_list, feed_dict={x_holder: _samples[:, -1024:],
-                                                                        latents_holder: _latents[:, i:i + 1024]})
-    _samples = np.concatenate([_samples, np.expand_dims(_inference_sample_list[dest_instrument_index], axis=0)], axis=-1)
-
-plt.subplot(4, 1, 3)
-plt.plot(_src[0])
-
-plt.subplot(4, 1, 4)
-plt.plot(_samples[0, 1024:])
-
-_epoch += 1
-plt.savefig('../resources/results_' + str(_epoch) + '.png')
-
 # Save the variables to disk.
-save_path = saver.save(sess, "../resources/model" + str(_epoch) + ".ckpt")
+save_path = saver.save(sess, "../resources/model.ckpt")
 print("Model saved in path: %s" % save_path)
